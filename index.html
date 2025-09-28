@@ -1,57 +1,76 @@
-
 <!DOCTYPE html>
-<html lang="fa">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>AR Video with Caraks Marker</title>
-    <!-- A-Frame & AR.js -->
-    <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
-    <style>
-      body, html { margin:0; padding:0; overflow:hidden; background:#000; }
-      #btn { position:fixed; bottom:10px; left:10px; z-index:10; }
-    </style>
-  </head>
-  <body>
-    <!-- ویدیو -->
-    <video id="vid" src="Carcar.mp4" loop playsinline webkit-playsinline muted></video>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <title>AR Video with Marker</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    .arjs-loader {
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-color: rgba(0, 0, 0, 0.8);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
 
-    <a-scene
-      embedded
-      arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
-    >
-      <!-- مارکر patt ساخته‌شده از Caraks.jpg -->
-      <a-marker type="pattern" url="marker.patt">
-        <a-video
-          src="#vid"
-          rotation="-90 0 0"
-          position="0 0 0"
-          width="1"
-          height="0.56"
-          autoplay="true"
-        ></a-video>
-      </a-marker>
+  <!-- لودینگ -->
+  <div class="arjs-loader">بارگذاری دوربین...</div>
 
-      <a-entity camera></a-entity>
-    </a-scene>
+  <!-- صحنه AR -->
+  <a-scene
+    vr-mode-ui="enabled: false"
+    arjs="sourceType: webcam; debugUIEnabled: false;"
+    renderer="logarithmicDepthBuffer: true;"
+  >
+    <!-- مارکر با فایل marker.patt -->
+    <a-marker type="pattern" url="marker.patt">
+      <!-- ویدیو -->
+      <a-video
+        id="ar-video"
+        src="Carcar.mp4"
+        width="1"
+        height="0.75"
+        autoplay
+        loop
+        muted
+        webkit-playsinline
+        playsinline
+        position="0 0 0"
+        rotation="-90 0 0"
+      ></a-video>
+    </a-marker>
 
-    <button id="btn">فعال‌سازی صدا</button>
+    <!-- دوربین -->
+    <a-entity camera></a-entity>
+  </a-scene>
 
-    <script>
-      const v = document.getElementById('vid');
-      const btn = document.getElementById('btn');
+  <!-- AR.js و A-Frame -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js"></script>
 
-      document.addEventListener('DOMContentLoaded', async () => {
-        try { await v.play(); } catch(e) {}
-      });
+  <script>
+    // پنهان کردن لودینگ بعد از آماده شدن صحنه
+    document.querySelector('a-scene').addEventListener('loaded', () => {
+      document.querySelector('.arjs-loader').style.display = 'none';
+    });
 
-      btn.addEventListener('click', async () => {
-        v.muted = false;
-        try { await v.play(); } catch(e) {}
-        btn.innerText = 'صدا روشن شد';
-        btn.disabled = true;
-      });
-    </script>
-  </body>
+    // ویدیو رو به صورت دستی پلی کنیم (برای برخی مرورگرها ضروریه)
+    const video = document.getElementById('ar-video');
+    video.play().catch(e => console.log("Autoplay blocked:", e));
+  </script>
+</body>
 </html>
