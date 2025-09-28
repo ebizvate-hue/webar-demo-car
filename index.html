@@ -2,7 +2,7 @@
 <html lang="fa">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>AR Video on Marker</title>
 
   <!-- A-Frame -->
@@ -11,7 +11,11 @@
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
   <style>
-    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
     #unmuteBtn {
       position: fixed;
       right: 16px;
@@ -38,7 +42,6 @@
   </style>
 </head>
 <body>
-
   <!-- ویدیو محلی - قرار بده کنار فایل index.html -->
   <video id="arVideo"
          src="Carcar.mp4"
@@ -58,15 +61,14 @@
     <!-- مارکر مربعی -->
     <a-marker id="myMarker" type="pattern" url="marker.patt">
       <!-- ویدیو مربعی دقیقا هم‌اندازه مارکر -->
-      <a-plane 
-        position="0 0 0" 
-        rotation="-90 0 0" 
-        width="1" 
-        height="1" 
+      <a-plane
+        position="0 0 0"
+        rotation="-90 0 0"
+        width="1"
+        height="1"
         material="shader: flat; src: #arVideo;">
       </a-plane>
     </a-marker>
-
     <a-entity camera></a-entity>
   </a-scene>
 
