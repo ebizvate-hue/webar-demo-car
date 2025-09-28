@@ -1,76 +1,106 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="fa">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-  <title>AR Video with Marker</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AR Video on Marker</title>
+
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <!-- AR.js for A-Frame -->
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-    }
-    .arjs-loader {
-      height: 100%;
-      width: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      background-color: rgba(0, 0, 0, 0.8);
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #unmuteBtn {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
       z-index: 9999;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      padding: 10px 14px;
+      background: rgba(0,0,0,0.6);
       color: white;
-      font-family: sans-serif;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    #hint {
+      position: fixed;
+      left: 16px;
+      bottom: 16px;
+      z-index: 9999;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      border-radius: 8px;
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
 
-  <!-- لودینگ -->
-  <div class="arjs-loader">بارگذاری دوربین...</div>
+  <!-- ویدیو محلی - قرار بده کنار فایل index.html -->
+  <video id="arVideo"
+         src="Carcar.mp4"
+         preload="auto"
+         loop
+         playsinline
+         webkit-playsinline
+         muted
+         crossorigin="anonymous"
+         style="display:none;"></video>
+
+  <button id="unmuteBtn" title="فعال کردن صدا">فعال کردن صدا</button>
+  <div id="hint">دوربین را مقابل مارکر مربعی (marker.patt) بگیرید</div>
 
   <!-- صحنه AR -->
-  <a-scene
-    vr-mode-ui="enabled: false"
-    arjs="sourceType: webcam; debugUIEnabled: false;"
-    renderer="logarithmicDepthBuffer: true;"
-  >
-    <!-- مارکر با فایل marker.patt -->
-    <a-marker type="pattern" url="marker.patt">
-      <!-- ویدیو -->
-      <a-video
-        id="ar-video"
-        src="Carcar.mp4"
-        width="1"
-        height="0.75"
-        autoplay
-        loop
-        muted
-        webkit-playsinline
-        playsinline
-        position="0 0 0"
-        rotation="-90 0 0"
-      ></a-video>
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+    <!-- مارکر مربعی -->
+    <a-marker id="myMarker" type="pattern" url="marker.patt">
+      <!-- ویدیو مربعی دقیقا هم‌اندازه مارکر -->
+      <a-plane 
+        position="0 0 0" 
+        rotation="-90 0 0" 
+        width="1" 
+        height="1" 
+        material="shader: flat; src: #arVideo;">
+      </a-plane>
     </a-marker>
 
-    <!-- دوربین -->
     <a-entity camera></a-entity>
   </a-scene>
 
-  <!-- AR.js و A-Frame -->
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js"></script>
-
   <script>
-    // پنهان کردن لودینگ بعد از آماده شدن صحنه
-    document.querySelector('a-scene').addEventListener('loaded', () => {
-      document.querySelector('.arjs-loader').style.display = 'none';
-    });
+    (function(){
+      const video = document.getElementById('arVideo');
+      const marker = document.getElementById('myMarker');
+      const unmuteBtn = document.getElementById('unmuteBtn');
 
-    // ویدیو رو به صورت دستی پلی کنیم (برای برخی مرورگرها ضروریه)
-    const video = document.getElementById('ar-video');
-    video.play().catch(e => console.log("Autoplay blocked:", e));
+      function tryPrimeVideo(){
+        const p = video.play();
+        if (p !== undefined) {
+          p.catch(err => console.log('Autoplay blocked until user gesture:', err));
+        }
+      }
+
+      marker.addEventListener('markerFound', () => {
+        video.currentTime = 0;
+        video.play().catch(e => console.log('play error:', e));
+      });
+
+      marker.addEventListener('markerLost', () => {
+        video.pause();
+      });
+
+      unmuteBtn.addEventListener('click', () => {
+        video.muted = false;
+        video.play().catch(e => console.log('play after unmute error:', e));
+        unmuteBtn.textContent = 'صدا فعال شد';
+        setTimeout(()=> unmuteBtn.style.display = 'none', 2000);
+      });
+
+      window.addEventListener('load', tryPrimeVideo);
+    })();
   </script>
 </body>
 </html>
