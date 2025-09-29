@@ -1,128 +1,54 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fa">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AR Video on Marker</title>
-
-  <!-- A-Frame -->
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-  <!-- AR.js for A-Frame -->
-  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
-
+  <meta charset="UTF-8">
+  <title>AR 3D Video Example</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/3.3.2/aframe/build/aframe-ar.js"></script>
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: sans-serif;
-    }
-    #unmuteBtn, #zoomInBtn, #zoomOutBtn {
-      position: fixed;
-      z-index: 9999;
-      padding: 10px 14px;
-      background: rgba(0,0,0,0.6);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-    #unmuteBtn { right: 16px; bottom: 16px; }
-    #zoomInBtn { left: 16px; bottom: 60px; }
-    #zoomOutBtn { left: 16px; bottom: 16px; }
-    #hint {
-      position: fixed;
-      left: 16px;
-      top: 16px;
-      z-index: 9999;
-      padding: 8px 12px;
-      background: rgba(0,0,0,0.45);
-      color: #fff;
-      border-radius: 8px;
-      font-size: 13px;
-    }
+    body { margin: 0; overflow: hidden; }
   </style>
 </head>
 <body>
-  <!-- ویدیو محلی -->
-  <video id="arVideo"
-         src="Carcar.mp4"
-         preload="auto"
-         loop
-         playsinline
-         webkit-playsinline
-         muted
-         crossorigin="anonymous"
-         style="display:none;"></video>
-
-  <button id="unmuteBtn" title="فعال کردن صدا">فعال کردن صدا</button>
-  <button id="zoomInBtn">+</button>
-  <button id="zoomOutBtn">−</button>
-  <div id="hint">دوربین را مقابل مارکر مربعی (marker.patt) بگیرید</div>
-
-  <!-- صحنه AR -->
-  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-    <a-marker id="myMarker" type="pattern" url="marker.patt">
-      <a-plane
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+  >
+    <!-- مارکر AR -->
+    <a-marker type="pattern" url="marker.patt" id="marker">
+      <!-- صفحه سه بعدی برای پخش ویدیو -->
+      <a-plane 
+        id="videoPlane" 
+        width="1.5" 
+        height="0.9" 
+        rotation="-90 0 0" 
         position="0 0 0"
-        rotation="-90 0 0"
-        width="1"
-        height="1"
-        material="shader: flat; src: #arVideo;">
+        material="shader: flat; src: #videoCar">
       </a-plane>
     </a-marker>
-    <a-entity id="camera" camera></a-entity>
+
+    <!-- دوربین -->
+    <a-entity camera></a-entity>
+
+    <!-- منبع ویدیو -->
+    <video id="videoCar" src="Carcar.mp4" preload="auto" loop crossorigin="anonymous" webkit-playsinline playsinline></video>
   </a-scene>
 
   <script>
-    (function(){
-      const video = document.getElementById('arVideo');
-      const marker = document.getElementById('myMarker');
-      const unmuteBtn = document.getElementById('unmuteBtn');
-      const zoomInBtn = document.getElementById('zoomInBtn');
-      const zoomOutBtn = document.getElementById('zoomOutBtn');
-      const cameraEl = document.getElementById('camera');
+    const marker = document.querySelector('#marker');
+    const video = document.querySelector('#videoCar');
 
-      function tryPrimeVideo(){
-        const p = video.play();
-        if (p !== undefined) {
-          p.catch(err => console.log('Autoplay blocked until user gesture:', err));
-        }
-      }
+    // وقتی مارکر پیدا شد ویدیو پخش شود
+    marker.addEventListener('markerFound', () => {
+      video.play();
+    });
 
-      marker.addEventListener('markerFound', () => {
-        video.currentTime = 0;
-        video.play().catch(e => console.log('play error:', e));
-      });
-
-      marker.addEventListener('markerLost', () => {
-        video.pause();
-      });
-
-      unmuteBtn.addEventListener('click', () => {
-        video.muted = false;
-        video.play().catch(e => console.log('play after unmute error:', e));
-        unmuteBtn.textContent = 'صدا فعال شد';
-        setTimeout(()=> unmuteBtn.style.display = 'none', 2000);
-        // دکمه‌های زوم
-      zoomInBtn.addEventListener('click', () => {
-        const cam = cameraEl.getObject3D('camera');
-        if (cam) {
-          cam.zoom = Math.min(cam.zoom + 0.1, 3); // حداکثر زوم 3
-          cam.updateProjectionMatrix();
-        }
-      });
-
-      zoomOutBtn.addEventListener('click', () => {
-        const cam = cameraEl.getObject3D('camera');
-        if (cam) {
-          cam.zoom = Math.max(cam.zoom - 0.1, 0.5); // حداقل زوم 0.5
-          cam.updateProjectionMatrix();
-        }
-      });
-
-      window.addEventListener('load', tryPrimeVideo);
-    })();
-  </script>
+    // وقتی مارکر ناپدید شد ویدیو متوقف شود
+    marker.addEventListener('markerLost', () => {
+      video.pause();
+      video.currentTime = 0;
+    });
+  </script>
 </body>
 </html>
-      });
