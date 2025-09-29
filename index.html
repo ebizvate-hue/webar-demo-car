@@ -1,69 +1,91 @@
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fa">
 <head>
-  <meta charset="utf-8">
-  <title>MindAR Image Target - Video on Target</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.2.0/dist/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image-aframe.prod.js"></script>
+  <meta charset="UTF-8">
+  <title>AR Video موبایل و دسکتاپ</title>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image-three.prod.js"></script>
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; background: black; color: white; font-family: sans-serif; }
-    #hint { position: absolute; z-index: 10; left: 10px; top: 10px; background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 8px; }
-    a-scene { width: 100%; height: 100%; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #fff;
+      font-family: sans-serif;
+    }
+    #ar-container {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    video {
+      display: none; /* ویدیو در صفحه مخفی است */
+    }
   </style>
 </head>
 <body>
-  <div id="hint">دوربین را مقابل عکس قرار بده — ویدیو روی عکس پخش می‌شود.</div>
 
-  <!-- ویدیو به‌صورت مخفی در سند قرار دارد، src باید به sample.mp4 اشاره کند -->
-  <video id="targetVideo" playsinline webkit-playsinline preload="auto" loop="false" crossorigin="anonymous" style="display:none">
-    <source src="./sample.mp4" type="video/mp4">
-    Your browser does not support HTML5 video.
-  </video>
+<div id="ar-container"></div>
 
-  <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes;"
-           vr-mode-ui="enabled: false"
-           device-orientation-permission-ui="enabled: true">
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+<!-- ویدیو با صدا -->
+<video id="video" src="sample.mp4" loop playsinline webkit-playsinline></video>
 
-    <!-- گره مربوط به تارگت شماره 0 -->
-    <a-entity mindar-image-target="targetIndex: 0">
-      <!-- صفحه‌ای که ویدیو روی آن نمایش داده می‌شود -->
-      <a-plane id="videoPlane" position="0 0 0" rotation="0 0 0" width="1" height="0.6" material="shader: flat; src: #targetVideo"></a-plane>
-    </a-entity>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const video = document.getElementById("video");
+  video.muted = false; // صدای ویدیو فعال
 
-  </a-scene>
+  const mindarThree = new window.MINDAR.IMAGE.MindARThree({
+    container: document.querySelector("#ar-container"),
+    imageTargetSrc: "targets.mind",
+    maxTrack: 1
+  });
 
-  <script>
-    const videoEl = document.getElementById('targetVideo');
-    const videoPlane = document.getElementById('videoPlane');
-    const targetEntity = document.querySelector('[mindar-image-target]');
+  const {renderer, scene, camera} = mindarThree;
 
-    async function tryPlayVideo() {
-      try {
-        await videoEl.play();
-      } catch (err) {
-        console.log('Video play failed (requires user interaction):', err);
-      }
-    }
+  // VideoTexture
+  const texture = new THREE.VideoTexture(video);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.format = THREE.RGBFormat;
 
-    targetEntity.addEventListener('targetFound', (event) => {
-      videoEl.style.display = 'block';
-      tryPlayVideo();
-      if (videoPlane && videoPlane.components && videoPlane.components.material) {
-        videoPlane.components.material.material.map.needsUpdate = true;
-      }
-    });
+  // Anchor
+  const anchor = mindarThree.addAnchor(0);
 
-    targetEntity.addEventListener('targetLost', (event) => {
-      videoEl.pause();
-      try { videoEl.currentTime = 0; } catch(e) {}
-    });
+  // وقتی target لود شد، اندازه واقعی آن را می‌گیریم
+  anchor.onTargetLoaded = () => {
+    const targetWidth = anchor.target.width;
+    const targetHeight = anchor.target.height;
 
-    window.addEventListener('load', async () => {
-      await tryPlayVideo();
-    });
-  </script>
+    // Plane هم اندازه target
+    const geometry = new THREE.PlaneGeometry(targetWidth, targetHeight);
+    const material = new THREE.MeshBasicMaterial({map: texture});
+    const videoPlane = new THREE.Mesh(geometry, material);
+    videoPlane.visible = false; // قبل از شناسایی مخفی
+
+    // اضافه کردن به anchor
+    anchor.group.add(videoPlane);
+
+    // وقتی تصویر شناسایی شد
+    anchor.onTargetFound = () => {
+      videoPlane.visible = true;
+      // برای موبایل: ویدیو بدون تعامل کار نمی‌کند، بنابراین صدا ممکن است نیاز به تعامل کاربر داشته باشد
+      video.play().catch(() => console.log("لطفا روی صفحه لمس کنید تا صدا پخش شود"));
+    };
+
+    // وقتی تصویر از زاویه دوربین خارج شد
+    anchor.onTargetLost = () => {
+      videoPlane.visible = false;
+      video.pause();
+      video.currentTime = 0;
+    };
+  };
+
+  mindarThree.start();
+  renderer.setAnimationLoop(() => {
+    renderer.render(scene, camera);
+  });
+});
+</script>
+
 </body>
 </html>
