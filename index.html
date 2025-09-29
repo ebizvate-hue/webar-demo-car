@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>AR Video Full Marker</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene
+      embedded
+      arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+    >
+      <!-- مارکر مربعی -->
+      <a-marker type="pattern" url="marker.patt" id="marker">
+        <!-- ویدیو کاملاً هم‌اندازه مارکر -->
+        <a-video
+          id="carVideoEntity"
+          src="#carVideo"
+          width="1"
+          height="1"
+          position="0 0 0"
+          rotation="-90 0 0"
+        ></a-video>
+      </a-marker>
+
+      <!-- منبع ویدیو -->
+      <a-assets>
+        <video id="carVideo" src="Carcar.mp4" loop="true" webkit-playsinline playsinline crossorigin="anonymous"></video>
+      </a-assets>
+
+      <a-entity camera></a-entity>
+
+      <script>
+        const marker = document.querySelector("#marker");
+        const video = document.querySelector("#carVideo");
+
+        // پخش ویدیو وقتی مارکر پیدا شد
+        marker.addEventListener("markerFound", () => {
+          video.play();
+        });
+
+        // توقف ویدیو وقتی مارکر ناپدید شد
+        marker.addEventListener("markerLost", () => {
+          video.pause();
+          video.currentTime = 0;
+        });
+      </script>
+    </a-scene>
+  </body>
+</html>
